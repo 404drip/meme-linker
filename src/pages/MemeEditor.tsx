@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import FileUpload from '@/components/FileUpload';
 
 const defaultForm: MemePageInsert = {
   title: '',
@@ -56,15 +57,12 @@ const MemeEditor = () => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
 
-  const generateSlug = (title: string) => {
-    return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  };
+  const generateSlug = (title: string) =>
+    title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
   const handleTitleChange = (title: string) => {
     set('title', title);
-    if (isNew) {
-      set('slug', generateSlug(title));
-    }
+    if (isNew) set('slug', generateSlug(title));
   };
 
   const handleSave = async () => {
@@ -122,6 +120,7 @@ const MemeEditor = () => {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6 space-y-6">
+        {/* Basic Info */}
         <Card>
           <CardHeader><CardTitle className="text-base">Basic Info</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -159,24 +158,26 @@ const MemeEditor = () => {
           </CardContent>
         </Card>
 
+        {/* Media Uploads */}
         <Card>
           <CardHeader><CardTitle className="text-base">Media</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input value={form.image_url || ''} onChange={(e) => set('image_url', e.target.value || null)} placeholder="https://..." />
+              <Label>Image</Label>
+              <FileUpload bucket="meme-media" accept="image/*" value={form.image_url} onChange={(url) => set('image_url', url)} label="Image" />
             </div>
             <div className="space-y-2">
-              <Label>Video URL</Label>
-              <Input value={form.video_url || ''} onChange={(e) => set('video_url', e.target.value || null)} placeholder="https://..." />
+              <Label>Video</Label>
+              <FileUpload bucket="meme-media" accept="video/*" value={form.video_url} onChange={(url) => set('video_url', url)} label="Video" />
             </div>
             <div className="space-y-2">
-              <Label>Audio URL</Label>
-              <Input value={form.audio_url || ''} onChange={(e) => set('audio_url', e.target.value || null)} placeholder="https://..." />
+              <Label>Audio</Label>
+              <FileUpload bucket="meme-media" accept="audio/*" value={form.audio_url} onChange={(url) => set('audio_url', url)} label="Audio" />
             </div>
           </CardContent>
         </Card>
 
+        {/* Video Settings */}
         <Card>
           <CardHeader><CardTitle className="text-base">Video Settings</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -196,6 +197,7 @@ const MemeEditor = () => {
           </CardContent>
         </Card>
 
+        {/* Appearance */}
         <Card>
           <CardHeader><CardTitle className="text-base">Appearance</CardTitle></CardHeader>
           <CardContent className="space-y-4">
@@ -220,6 +222,7 @@ const MemeEditor = () => {
           </CardContent>
         </Card>
 
+        {/* CTA */}
         <Card>
           <CardHeader><CardTitle className="text-base">Buy Button (CTA)</CardTitle></CardHeader>
           <CardContent className="space-y-4">

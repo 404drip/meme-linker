@@ -2,17 +2,19 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getMemePageBySlug } from '@/lib/meme-api';
 import type { MemePage } from '@/types/database';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const CTAButton = ({ text, url, className }: { text: string; url: string; className?: string }) => (
-  <a
+  <motion.a
     href={url || '#'}
     target="_blank"
     rel="noopener noreferrer"
-    className={`inline-block rounded-full px-8 py-4 text-lg font-bold tracking-wide transition-transform active:scale-95 ${className}`}
-    style={{ backgroundColor: '#fff', color: '#000' }}
+    className={`inline-block rounded-full bg-white px-10 py-4 text-lg font-bold tracking-wide text-black transition-colors hover:bg-white/90 active:scale-95 ${className}`}
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
   >
     {text || 'Buy Your Own'}
-  </a>
+  </motion.a>
 );
 
 const PublicMemePage = () => {
@@ -48,72 +50,130 @@ const PublicMemePage = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white border-t-transparent" />
+      <div className="flex min-h-[100dvh] items-center justify-center bg-black">
+        <motion.div
+          className="h-10 w-10 rounded-full border-2 border-white border-t-transparent"
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 0.8, ease: 'linear' }}
+        />
       </div>
     );
   }
 
   if (notFound || !page) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-black text-white">
-        <p className="text-6xl font-bold">404</p>
-        <p className="mt-2 text-xl text-white/60">Page not found</p>
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-black text-white">
+        <motion.p
+          className="text-8xl font-black"
+          initial={{ scale: 0, rotate: -10 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ type: 'spring', damping: 10, stiffness: 100 }}
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          404
+        </motion.p>
+        <motion.p
+          className="mt-4 text-xl text-white/50"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          This page doesn't exist
+        </motion.p>
       </div>
     );
   }
 
-  const bgColor = page.background_color || (page.theme === 'light' ? '#ffffff' : page.theme === 'neon' ? '#0a0a0a' : '#000000');
-  const textColor = page.theme === 'light' ? '#000000' : '#ffffff';
+  const bgColor = page.background_color || '#000000';
   const showStickyButton = page.cta_placement === 'sticky' || page.cta_placement === 'both';
   const showInlineButton = page.cta_placement === 'below' || page.cta_placement === 'both';
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center px-4 py-8"
-      style={{ backgroundColor: bgColor, color: textColor }}
+      className="flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4"
+      style={{ backgroundColor: bgColor }}
     >
-      <div className="flex w-full max-w-lg flex-col items-center gap-6 text-center">
-        {/* Headline */}
-        <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+      <div className="flex w-full max-w-lg flex-col items-center gap-8 py-12 text-center">
+        {/* Headline — slams in */}
+        <motion.h1
+          className="text-5xl font-black leading-[1.1] tracking-tighter text-white sm:text-6xl md:text-7xl"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          initial={{ opacity: 0, y: 60, scale: 0.8 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ type: 'spring', damping: 12, stiffness: 100, delay: 0.1 }}
+        >
           {page.headline}
-        </h1>
+        </motion.h1>
 
-        {/* Subtext */}
+        {/* Subtext — fades up */}
         {page.subtext && (
-          <p className="text-lg opacity-70">{page.subtext}</p>
-        )}
-
-        {/* Image */}
-        {page.image_url && (
-          <img src={page.image_url} alt={page.title} className="w-full max-w-md rounded-lg" loading="eager" />
-        )}
-
-        {/* Video with press-to-play */}
-        {page.video_url && page.press_to_play && !videoPlaying && (
-          <button
-            onClick={handlePressToPlay}
-            className="relative flex h-64 w-full max-w-md items-center justify-center rounded-2xl border-4 border-dashed transition-all active:scale-95"
-            style={{ borderColor: textColor, color: textColor }}
+          <motion.p
+            className="max-w-md text-lg text-white/60"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
           >
-            <span className="text-3xl font-extrabold tracking-wide animate-pulse">
-              {page.press_to_play_text || 'Press Me'}
-            </span>
-          </button>
+            {page.subtext}
+          </motion.p>
         )}
+
+        {/* Image — scales in */}
+        {page.image_url && (
+          <motion.img
+            src={page.image_url}
+            alt={page.headline}
+            className="w-full max-w-md rounded-2xl shadow-2xl shadow-white/5"
+            loading="eager"
+            initial={{ opacity: 0, scale: 0.7, y: 40 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', damping: 15, stiffness: 80, delay: 0.3 }}
+          />
+        )}
+
+        {/* Press to Play button */}
+        <AnimatePresence>
+          {page.video_url && page.press_to_play && !videoPlaying && (
+            <motion.button
+              onClick={handlePressToPlay}
+              className="relative flex h-72 w-full max-w-md items-center justify-center rounded-3xl border-4 border-white/30 bg-white/5 backdrop-blur-sm"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.2 }}
+              transition={{ type: 'spring', damping: 12, stiffness: 100, delay: 0.5 }}
+              whileHover={{ scale: 1.02, borderColor: 'rgba(255,255,255,0.6)' }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <motion.span
+                className="text-4xl font-black tracking-wider text-white"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+              >
+                {page.press_to_play_text || 'Press Me'}
+              </motion.span>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* Video player */}
         {page.video_url && (!page.press_to_play || videoPlaying) && (
-          <video
-            ref={videoRef}
-            src={page.video_url}
-            className="w-full max-w-md rounded-lg"
-            controls
-            playsInline
-            autoPlay={!page.press_to_play}
-            muted={!page.press_to_play}
-            loop
-          />
+          <motion.div
+            className="w-full max-w-md overflow-hidden rounded-2xl shadow-2xl shadow-white/5"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', damping: 15, stiffness: 80 }}
+          >
+            <video
+              ref={videoRef}
+              src={page.video_url}
+              className="w-full"
+              controls
+              playsInline
+              autoPlay={!page.press_to_play}
+              muted={!page.press_to_play}
+              loop
+            />
+          </motion.div>
         )}
 
         {/* Audio */}
@@ -121,19 +181,30 @@ const PublicMemePage = () => {
           <audio ref={audioRef} src={page.audio_url} loop />
         )}
 
-        {/* Inline CTA */}
+        {/* Inline CTA — slides up */}
         {showInlineButton && (
-          <div className="mt-4">
+          <motion.div
+            className="mt-6"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+          >
             <CTAButton text={page.cta_text} url={page.cta_url} />
-          </div>
+          </motion.div>
         )}
       </div>
 
       {/* Sticky CTA */}
       {showStickyButton && (
-        <div className="fixed bottom-0 left-0 right-0 flex justify-center p-4" style={{ backgroundColor: `${bgColor}ee` }}>
-          <CTAButton text={page.cta_text} url={page.cta_url} className="w-full max-w-md text-center" />
-        </div>
+        <motion.div
+          className="fixed bottom-0 left-0 right-0 flex justify-center p-4 pb-6"
+          style={{ background: `linear-gradient(transparent, ${bgColor})` }}
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          transition={{ delay: 1, type: 'spring', damping: 20 }}
+        >
+          <CTAButton text={page.cta_text} url={page.cta_url} className="w-full max-w-md text-center shadow-xl" />
+        </motion.div>
       )}
     </div>
   );
