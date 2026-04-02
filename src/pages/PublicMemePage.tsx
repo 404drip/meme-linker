@@ -155,25 +155,26 @@ const PublicMemePage = () => {
           )}
         </AnimatePresence>
 
-        {/* Video player */}
-        {page.video_url && (!page.press_to_play || videoPlaying) && (
-          <motion.div
-            className="w-full max-w-md overflow-hidden rounded-2xl shadow-2xl shadow-white/5"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', damping: 15, stiffness: 80 }}
-          >
-            <video
-              ref={videoRef}
-              src={page.video_url}
-              className="w-full"
-              controls
-              playsInline
-              autoPlay={!page.press_to_play}
-              muted={!page.press_to_play}
-              loop
-            />
-          </motion.div>
+        {/* Video player — reserved aspect-ratio box prevents layout shift */}
+        {page.video_url && (
+          <div className="w-full max-w-md aspect-video overflow-hidden rounded-2xl bg-black shadow-2xl shadow-white/5">
+            {(!page.press_to_play || videoPlaying) ? (
+              <motion.video
+                ref={videoRef}
+                src={page.video_url}
+                className="h-full w-full object-cover"
+                controls
+                playsInline
+                preload="metadata"
+                autoPlay={!page.press_to_play}
+                muted={!page.press_to_play}
+                loop
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            ) : null}
+          </div>
         )}
 
         {/* Audio */}
