@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -11,17 +11,25 @@ import { Loader2 } from 'lucide-react';
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [staySignedIn, setStaySignedIn] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Redirect if already logged in or after successful login
+  useEffect(() => {
+    if (user) {
+      navigate('/admin', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     setLoading(true);
     try {
-      await signIn(email, password, staySignedIn);
+      await signIn(email, password);
+      // navigate will happen via the useEffect above
     } catch (error: any) {
       toast({
         title: 'Login failed',
@@ -63,16 +71,6 @@ const AdminLogin = () => {
                 placeholder="••••••••"
                 required
               />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="stay-signed-in"
-                checked={staySignedIn}
-                onCheckedChange={(checked) => setStaySignedIn(checked === true)}
-              />
-              <Label htmlFor="stay-signed-in" className="text-sm font-normal cursor-pointer">
-                Stay signed in
-              </Label>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
