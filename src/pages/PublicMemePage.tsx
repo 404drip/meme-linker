@@ -93,13 +93,54 @@ const PublicMemePage = () => {
   const showStickyButton = page.cta_placement === 'sticky' || page.cta_placement === 'both';
   const showInlineButton = page.cta_placement === 'below' || page.cta_placement === 'both';
 
+  // Full-screen "Press Me" gate
+  if (usePressToPlay && !revealed) {
+    return (
+      <div
+        className="flex min-h-[100dvh] flex-col items-center justify-center px-4"
+        style={{ backgroundColor: bgColor }}
+      >
+        {/* Hidden video preloading in background */}
+        <video
+          ref={videoRef}
+          src={page.video_url!}
+          className="hidden"
+          playsInline
+          preload="auto"
+          muted
+          loop
+        />
+        {page.audio_url && <audio ref={audioRef} src={page.audio_url} loop className="hidden" />}
+
+        <motion.button
+          onClick={handlePressToPlay}
+          className="flex h-72 w-full max-w-md items-center justify-center rounded-3xl border-4 border-white/30 bg-white/5 backdrop-blur-sm"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', damping: 12, stiffness: 100 }}
+          whileHover={{ scale: 1.02, borderColor: 'rgba(255,255,255,0.6)' }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <motion.span
+            className="text-4xl font-black tracking-wider text-white drop-shadow-lg"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            animate={{ scale: [1, 1.08, 1] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
+          >
+            {page.press_to_play_text || 'Press Me'}
+          </motion.span>
+        </motion.button>
+      </div>
+    );
+  }
+
   return (
     <div
       className="flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden px-4"
       style={{ backgroundColor: bgColor }}
     >
       <div className="flex w-full max-w-lg flex-col items-center gap-8 py-12 text-center">
-        {/* Headline — slams in */}
+        {/* Headline */}
         <motion.h1
           className="text-5xl font-black leading-[1.1] tracking-tighter text-white sm:text-6xl md:text-7xl"
           style={{ fontFamily: "'Space Grotesk', sans-serif" }}
@@ -110,7 +151,7 @@ const PublicMemePage = () => {
           {page.headline}
         </motion.h1>
 
-        {/* Subtext — fades up */}
+        {/* Subtext */}
         {page.subtext && (
           <motion.p
             className="max-w-md text-lg text-white/60"
@@ -122,7 +163,7 @@ const PublicMemePage = () => {
           </motion.p>
         )}
 
-        {/* Image — scales in */}
+        {/* Image */}
         {page.image_url && (
           <motion.img
             src={page.image_url}
@@ -135,47 +176,25 @@ const PublicMemePage = () => {
           />
         )}
 
-        {/* Video with overlay Press to Play */}
+        {/* Video */}
         {page.video_url && (
-          <div className="relative w-full max-w-md aspect-video overflow-hidden rounded-2xl bg-black shadow-2xl shadow-white/5">
-            <motion.video
+          <motion.div
+            className="w-full max-w-md aspect-video overflow-hidden rounded-2xl bg-black shadow-2xl shadow-white/5"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', damping: 15, stiffness: 80, delay: 0.2 }}
+          >
+            <video
               ref={videoRef}
               src={page.video_url}
-              className="absolute inset-0 h-full w-full object-cover"
-              controls={videoPlaying}
+              className="h-full w-full object-cover"
+              controls
               playsInline
-              preload="metadata"
-              autoPlay={videoPlaying}
-              muted={!videoPlaying}
+              preload="auto"
+              autoPlay
               loop
-              initial={false}
-              animate={{ opacity: videoPlaying ? 1 : 0.85, scale: videoPlaying ? 1 : 1.03 }}
-              transition={{ duration: 0.4 }}
             />
-            <AnimatePresence>
-              {page.press_to_play && !videoPlaying && (
-                <motion.button
-                  onClick={handlePressToPlay}
-                  className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, scale: 1.1 }}
-                  transition={{ duration: 0.3 }}
-                  whileHover={{ backgroundColor: 'rgba(0,0,0,0.25)' }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  <motion.span
-                    className="text-4xl font-black tracking-wider text-white drop-shadow-lg"
-                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: 'easeInOut' }}
-                  >
-                    {page.press_to_play_text || 'Press Me'}
-                  </motion.span>
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
+          </motion.div>
         )}
 
         {/* Audio */}
@@ -183,7 +202,7 @@ const PublicMemePage = () => {
           <audio ref={audioRef} src={page.audio_url} loop />
         )}
 
-        {/* Inline CTA — slides up */}
+        {/* Inline CTA */}
         {showInlineButton && (
           <motion.div
             className="mt-6"
