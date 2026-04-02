@@ -39,10 +39,12 @@ const PublicMemePage = () => {
   }, [slug]);
 
   const handlePressToPlay = () => {
+    setRevealed(true);
     setVideoPlaying(true);
     setTimeout(() => {
       if (videoRef.current) {
         videoRef.current.muted = false;
+        videoRef.current.currentTime = 0;
         videoRef.current.play();
       }
       if (audioRef.current) {
