@@ -22,9 +22,12 @@ const PublicMemePage = () => {
   const [page, setPage] = useState<MemePage | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [revealed, setRevealed] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const usePressToPlay = !!(page?.press_to_play && page?.video_url);
 
   useEffect(() => {
     if (!slug) { setNotFound(true); setLoading(false); return; }
