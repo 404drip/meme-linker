@@ -2,25 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { getMemePages } from '@/lib/meme-api';
 import type { MemePage } from '@/types/database';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Settings } from 'lucide-react';
-// Audio context to unlock web audio on first user interaction
-let audioUnlocked = false;
-const unlockAudio = () => {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  // Create and play a silent audio context to unlock audio playback
-  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const buffer = ctx.createBuffer(1, 1, 22050);
-  const source = ctx.createBufferSource();
-  source.buffer = buffer;
-  source.connect(ctx.destination);
-  source.start(0);
-  document.removeEventListener('click', unlockAudio);
-  document.removeEventListener('touchstart', unlockAudio);
-};
-document.addEventListener('click', unlockAudio);
-document.addEventListener('touchstart', unlockAudio);
 
 const MemeCard = ({ meme }: { meme: MemePage }) => {
   const [hovered, setHovered] = useState(false);
@@ -37,7 +20,6 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
         video.muted = false;
         video.volume = 1;
         video.play().catch(() => {
-          // Fallback: play muted if browser blocks unmuted autoplay
           video.muted = true;
           video.play().catch(() => {});
         });
@@ -94,7 +76,6 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
             </div>
           )}
 
-          {/* Hover overlay */}
           <motion.div
             className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"
             initial={{ opacity: 0 }}
@@ -102,7 +83,6 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
             transition={{ duration: 0.3 }}
           />
 
-          {/* Play indicator on hover */}
           {meme.video_url && (
             <motion.div
               className="absolute inset-0 flex items-center justify-center"
@@ -132,6 +112,7 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
 };
 
 const Index = () => {
+  const [entered, setEntered] = useState(false);
   const [memes, setMemes] = useState<MemePage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -142,69 +123,140 @@ const Index = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleEnter = () => {
+    // Unlock audio context on this user gesture
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(ctx.destination);
+      source.start(0);
+    } catch {}
+    setEntered(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Nav */}
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">QR Meme</h1>
-          <Link
-            to="/admin/login"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-            title="Admin"
+      <AnimatePresence mode="wait">
+        {!entered ? (
+          <motion.div
+            key="gate"
+            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary"
+            exit={{ opacity: 0, scale: 1.1 }}
+            transition={{ duration: 0.5 }}
           >
-            <Settings className="h-5 w-5" />
-          </Link>
-        </div>
-      </header>
+            {/* Glitch / noise overlay */}
+            <div className="pointer-events-none absolute inset-0 opacity-[0.03]"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+              }}
+            />
 
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10 text-center"
-        >
-          <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
-            Browse Memes
-          </h2>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Hover to preview · Click to experience
-          </p>
-        </motion.div>
+            <motion.h1
+              className="text-6xl font-black tracking-tighter text-primary-foreground sm:text-8xl"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+            >
+              404chaos
+            </motion.h1>
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
-        ) : memes.length === 0 ? (
-          <div className="flex flex-col items-center py-20">
-            <p className="text-muted-foreground text-lg">No memes published yet</p>
-          </div>
+            <motion.p
+              className="mt-4 text-lg text-primary-foreground/60 tracking-wide"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+            >
+              you've been warned
+            </motion.p>
+
+            <motion.button
+              onClick={handleEnter}
+              className="mt-12 rounded-full border-2 border-primary-foreground/30 bg-transparent px-12 py-4 text-lg font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-primary"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.9, duration: 0.5 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Enter Site
+            </motion.button>
+          </motion.div>
         ) : (
           <motion.div
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.08 } },
-            }}
+            key="content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            {memes.map(meme => (
+            {/* Nav */}
+            <header className="border-b border-border">
+              <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+                <h1 className="text-2xl font-extrabold tracking-tighter text-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                  404chaos
+                </h1>
+                <Link
+                  to="/admin/login"
+                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
+                  title="Admin"
+                >
+                  <Settings className="h-4 w-4" />
+                </Link>
+              </div>
+            </header>
+
+            <main className="mx-auto max-w-6xl px-4 py-10">
               <motion.div
-                key={meme.id}
-                variants={{
-                  hidden: { opacity: 0, y: 30 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                transition={{ duration: 0.4 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-10 text-center"
               >
-                <MemeCard meme={meme} />
+                <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
+                  Browse Memes
+                </h2>
+                <p className="mt-2 text-lg text-muted-foreground">
+                  Hover to preview · Click to experience
+                </p>
               </motion.div>
-            ))}
+
+              {loading ? (
+                <div className="flex justify-center py-20">
+                  <p className="text-muted-foreground">Loading...</p>
+                </div>
+              ) : memes.length === 0 ? (
+                <div className="flex flex-col items-center py-20">
+                  <p className="text-muted-foreground text-lg">No memes published yet</p>
+                </div>
+              ) : (
+                <motion.div
+                  className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: {},
+                    visible: { transition: { staggerChildren: 0.08 } },
+                  }}
+                >
+                  {memes.map(meme => (
+                    <motion.div
+                      key={meme.id}
+                      variants={{
+                        hidden: { opacity: 0, y: 30 },
+                        visible: { opacity: 1, y: 0 },
+                      }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      <MemeCard meme={meme} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </main>
           </motion.div>
         )}
-      </main>
+      </AnimatePresence>
     </div>
   );
 };
