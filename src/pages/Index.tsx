@@ -4,6 +4,23 @@ import { getMemePages } from '@/lib/meme-api';
 import type { MemePage } from '@/types/database';
 import { motion } from 'framer-motion';
 import { Settings } from 'lucide-react';
+// Audio context to unlock web audio on first user interaction
+let audioUnlocked = false;
+const unlockAudio = () => {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  // Create and play a silent audio context to unlock audio playback
+  const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const buffer = ctx.createBuffer(1, 1, 22050);
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(ctx.destination);
+  source.start(0);
+  document.removeEventListener('click', unlockAudio);
+  document.removeEventListener('touchstart', unlockAudio);
+};
+document.addEventListener('click', unlockAudio);
+document.addEventListener('touchstart', unlockAudio);
 
 const MemeCard = ({ meme }: { meme: MemePage }) => {
   const [hovered, setHovered] = useState(false);
@@ -11,23 +28,33 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
+    const video = videoRef.current;
+    const audio = audioRef.current;
+
     if (hovered) {
-      if (videoRef.current) {
-        videoRef.current.currentTime = 0;
-        videoRef.current.muted = false;
-        videoRef.current.play().catch(() => {});
+      if (video) {
+        video.currentTime = 0;
+        video.muted = false;
+        video.volume = 1;
+        video.play().catch(() => {
+          // Fallback: play muted if browser blocks unmuted autoplay
+          video.muted = true;
+          video.play().catch(() => {});
+        });
       }
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play().catch(() => {});
+      if (audio) {
+        audio.currentTime = 0;
+        audio.volume = 1;
+        audio.play().catch(() => {});
       }
     } else {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.muted = true;
+      if (video) {
+        video.pause();
+        video.muted = true;
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
       }
     }
   }, [hovered]);
