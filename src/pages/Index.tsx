@@ -8,14 +8,27 @@ import { Settings } from 'lucide-react';
 const MemeCard = ({ meme }: { meme: MemePage }) => {
   const [hovered, setHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (!videoRef.current) return;
     if (hovered) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
+      if (videoRef.current) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.muted = false;
+        videoRef.current.play().catch(() => {});
+      }
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
+      }
     } else {
-      videoRef.current.pause();
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.muted = true;
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
     }
   }, [hovered]);
 
