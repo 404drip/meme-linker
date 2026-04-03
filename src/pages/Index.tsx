@@ -35,7 +35,8 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
   return (
     <Link to={`/m/${meme.slug}`}>
       <motion.div
-        className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-lg cursor-pointer"
+        className="group relative overflow-hidden rounded-2xl border border-border shadow-lg cursor-pointer"
+        style={{ backgroundColor: meme.background_color || undefined }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         whileHover={{ scale: 1.03, y: -4 }}
