@@ -215,10 +215,10 @@ const Index = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-6 sm:mb-10 text-center"
               >
-                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-primary-foreground">
                   Browse Memes
                 </h2>
-                <p className="mt-1 sm:mt-2 text-sm sm:text-lg text-muted-foreground">
+                <p className="mt-1 sm:mt-2 text-sm sm:text-lg text-primary-foreground/50">
                   Tap to preview · Click to experience
                 </p>
               </motion.div>
