@@ -194,14 +194,14 @@ const Index = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             {/* Nav */}
-            <header className="border-b border-border">
+            <header className="border-b border-primary-foreground/10">
               <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-                <h1 className="text-2xl font-extrabold tracking-tighter text-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                <h1 className="text-2xl font-extrabold tracking-tighter text-primary-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   404chaos
                 </h1>
                 <Link
                   to="/admin/login"
-                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
+                  className="text-primary-foreground/30 hover:text-primary-foreground transition-colors"
                   title="Admin"
                 >
                   <Settings className="h-4 w-4" />
