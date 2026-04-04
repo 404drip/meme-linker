@@ -209,17 +209,17 @@ const Index = () => {
               </div>
             </header>
 
-            <main className="mx-auto max-w-6xl px-4 py-10">
+            <main className="mx-auto max-w-6xl px-3 sm:px-4 py-6 sm:py-10">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-10 text-center"
+                className="mb-6 sm:mb-10 text-center"
               >
-                <h2 className="text-4xl font-extrabold tracking-tight text-foreground">
+                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
                   Browse Memes
                 </h2>
-                <p className="mt-2 text-lg text-muted-foreground">
-                  Hover to preview · Click to experience
+                <p className="mt-1 sm:mt-2 text-sm sm:text-lg text-muted-foreground">
+                  Tap to preview · Click to experience
                 </p>
               </motion.div>
 
@@ -233,7 +233,7 @@ const Index = () => {
                 </div>
               ) : (
                 <motion.div
-                  className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                  className="grid gap-3 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                   initial="hidden"
                   animate="visible"
                   variants={{
