@@ -44,10 +44,12 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
   return (
     <Link to={`/m/${meme.slug}`}>
       <motion.div
-        className="group relative overflow-hidden rounded-2xl border border-border shadow-lg cursor-pointer"
+        className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-border shadow-lg cursor-pointer"
         style={{ backgroundColor: meme.background_color || undefined }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        onTouchStart={() => setHovered(true)}
+        onTouchEnd={() => setHovered(false)}
         whileHover={{ scale: 1.03, y: -4 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       >
@@ -70,7 +72,7 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <span className="text-4xl font-black text-muted-foreground/30 uppercase tracking-widest">
+              <span className="text-2xl sm:text-4xl font-black text-muted-foreground/30 uppercase tracking-widest">
                 {meme.title.slice(0, 2)}
               </span>
             </div>
@@ -90,8 +92,8 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
               animate={{ opacity: hovered ? 0 : 0.8 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="rounded-full bg-white/20 p-4 backdrop-blur-sm">
-                <svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <div className="rounded-full bg-white/20 p-3 sm:p-4 backdrop-blur-sm">
+                <svg className="h-6 w-6 sm:h-8 sm:w-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </div>
@@ -99,9 +101,9 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
           )}
         </div>
 
-        <div className="p-4">
-          <h3 className="text-lg font-bold truncate" style={{ color: meme.background_color ? '#fff' : undefined }}>{meme.title}</h3>
-          <p className="mt-1 text-sm truncate" style={{ color: meme.background_color ? 'rgba(255,255,255,0.7)' : undefined }}>{meme.headline}</p>
+        <div className="p-3 sm:p-4">
+          <h3 className="text-base sm:text-lg font-bold truncate" style={{ color: meme.background_color ? '#fff' : undefined }}>{meme.title}</h3>
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm truncate" style={{ color: meme.background_color ? 'rgba(255,255,255,0.7)' : undefined }}>{meme.headline}</p>
         </div>
         {meme.audio_url && (
           <audio ref={audioRef} src={meme.audio_url} preload="metadata" />
