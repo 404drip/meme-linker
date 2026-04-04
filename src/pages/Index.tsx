@@ -139,7 +139,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-primary text-primary-foreground">
       <AnimatePresence mode="wait">
         {!entered ? (
           <motion.div
