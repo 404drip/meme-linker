@@ -225,11 +225,11 @@ const Index = () => {
 
               {loading ? (
                 <div className="flex justify-center py-20">
-                  <p className="text-muted-foreground">Loading...</p>
+                  <p className="text-primary-foreground/50">Loading...</p>
                 </div>
               ) : memes.length === 0 ? (
                 <div className="flex flex-col items-center py-20">
-                  <p className="text-muted-foreground text-lg">No memes published yet</p>
+                  <p className="text-primary-foreground/50 text-lg">No memes published yet</p>
                 </div>
               ) : (
                 <motion.div
