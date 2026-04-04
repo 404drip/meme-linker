@@ -1,22 +1,47 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, createContext, useContext, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getMemePages } from '@/lib/meme-api';
 import type { MemePage } from '@/types/database';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings } from 'lucide-react';
+import { Settings, Pause, Play } from 'lucide-react';
+
+// Context to allow global pause
+const PauseContext = createContext<{
+  paused: boolean;
+  registerMedia: (stop: () => void, play: () => void) => () => void;
+}>({ paused: false, registerMedia: () => () => {} });
 
 const MemeCard = ({ meme }: { meme: MemePage }) => {
+  const [activated, setActivated] = useState(false);
   const [hovered, setHovered] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const { paused, registerMedia } = useContext(PauseContext);
+
+  // Register this card's media with the global pause system
+  useEffect(() => {
+    const stop = () => {
+      videoRef.current?.pause();
+      audioRef.current?.pause();
+    };
+    const play = () => {
+      if (activated) {
+        videoRef.current?.play().catch(() => {});
+        audioRef.current?.play().catch(() => {});
+      }
+    };
+    return registerMedia(stop, play);
+  }, [activated, registerMedia]);
+
+  const shouldPlay = (activated || hovered) && !paused;
 
   useEffect(() => {
     const video = videoRef.current;
     const audio = audioRef.current;
 
-    if (hovered) {
+    if (shouldPlay) {
       if (video) {
-        video.currentTime = 0;
+        if (!activated) video.currentTime = 0;
         video.muted = false;
         video.volume = 1;
         video.play().catch(() => {
@@ -25,7 +50,7 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
         });
       }
       if (audio) {
-        audio.currentTime = 0;
+        if (!activated) audio.currentTime = 0;
         audio.volume = 1;
         audio.play().catch(() => {});
       }
@@ -36,10 +61,14 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
       }
       if (audio) {
         audio.pause();
-        audio.currentTime = 0;
       }
     }
-  }, [hovered]);
+  }, [shouldPlay, activated]);
+
+  const handleTouchStart = () => {
+    setActivated(true);
+    setHovered(true);
+  };
 
   return (
     <Link to={`/m/${meme.slug}`}>
@@ -47,9 +76,8 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
         className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-border shadow-lg cursor-pointer"
         style={{ backgroundColor: meme.background_color || undefined }}
         onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onTouchStart={() => setHovered(true)}
-        onTouchEnd={() => setHovered(false)}
+        onMouseLeave={() => { setHovered(false); setActivated(false); }}
+        onTouchStart={handleTouchStart}
         whileHover={{ scale: 1.03, y: -4 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       >
@@ -81,15 +109,15 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
           <motion.div
             className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"
             initial={{ opacity: 0 }}
-            animate={{ opacity: hovered ? 1 : 0.4 }}
+            animate={{ opacity: shouldPlay ? 1 : 0.4 }}
             transition={{ duration: 0.3 }}
           />
 
-          {meme.video_url && (
+          {meme.video_url && !activated && (
             <motion.div
               className="absolute inset-0 flex items-center justify-center"
               initial={{ opacity: 0 }}
-              animate={{ opacity: hovered ? 0 : 0.8 }}
+              animate={{ opacity: shouldPlay ? 0 : 0.8 }}
               transition={{ duration: 0.2 }}
             >
               <div className="rounded-full bg-white/20 p-3 sm:p-4 backdrop-blur-sm">
@@ -117,6 +145,26 @@ const Index = () => {
   const [entered, setEntered] = useState(false);
   const [memes, setMemes] = useState<MemePage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [globalPaused, setGlobalPaused] = useState(false);
+  const mediaRefs = useRef<Array<{ stop: () => void; play: () => void }>>([]);
+
+  const registerMedia = useCallback((stop: () => void, play: () => void) => {
+    const entry = { stop, play };
+    mediaRefs.current.push(entry);
+    return () => {
+      mediaRefs.current = mediaRefs.current.filter(e => e !== entry);
+    };
+  }, []);
+
+  const toggleGlobalPause = () => {
+    const next = !globalPaused;
+    setGlobalPaused(next);
+    if (next) {
+      mediaRefs.current.forEach(m => m.stop());
+    } else {
+      mediaRefs.current.forEach(m => m.play());
+    }
+  };
 
   useEffect(() => {
     getMemePages()
@@ -126,7 +174,6 @@ const Index = () => {
   }, []);
 
   const handleEnter = () => {
-    // Unlock audio context on this user gesture
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const buffer = ctx.createBuffer(1, 1, 22050);
@@ -139,127 +186,140 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AnimatePresence mode="wait">
-        {!entered ? (
-          <motion.div
-            key="gate"
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary"
-            exit={{ opacity: 0, scale: 1.1 }}
-            transition={{ duration: 0.5 }}
-          >
-            {/* Glitch / noise overlay */}
-            <div className="pointer-events-none absolute inset-0 opacity-[0.03]"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-              }}
-            />
-
-            <motion.h1
-              className="text-6xl font-black tracking-tighter text-primary-foreground sm:text-8xl"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+    <PauseContext.Provider value={{ paused: globalPaused, registerMedia }}>
+      <div className="min-h-screen bg-background">
+        <AnimatePresence mode="wait">
+          {!entered ? (
+            <motion.div
+              key="gate"
+              className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary"
+              exit={{ opacity: 0, scale: 1.1 }}
+              transition={{ duration: 0.5 }}
             >
-              404chaos
-            </motion.h1>
+              <div className="pointer-events-none absolute inset-0 opacity-[0.03]"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
+                }}
+              />
 
-            <motion.p
-              className="mt-4 text-lg text-primary-foreground/60 tracking-wide"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
-            >
-              you've been warned
-            </motion.p>
+              <motion.h1
+                className="text-6xl font-black tracking-tighter text-primary-foreground sm:text-8xl"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+              >
+                404chaos
+              </motion.h1>
 
-            <motion.button
-              onClick={handleEnter}
-              className="mt-12 rounded-full border-2 border-primary-foreground/30 bg-transparent px-12 py-4 text-lg font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-primary"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.9, duration: 0.5 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Enter Site
-            </motion.button>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="content"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            {/* Nav */}
-            <header className="border-b border-border">
-              <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-                <h1 className="text-2xl font-extrabold tracking-tighter text-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                  404chaos
-                </h1>
-                <Link
-                  to="/admin/login"
-                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
-                  title="Admin"
-                >
-                  <Settings className="h-4 w-4" />
-                </Link>
-              </div>
-            </header>
+              <motion.p
+                className="mt-4 text-lg text-primary-foreground/60 tracking-wide"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+              >
+                you've been warned
+              </motion.p>
 
-            <main className="mx-auto max-w-6xl px-3 sm:px-4 py-6 sm:py-10">
-              <motion.div
+              <motion.button
+                onClick={handleEnter}
+                className="mt-12 rounded-full border-2 border-primary-foreground/30 bg-transparent px-12 py-4 text-lg font-bold uppercase tracking-widest text-primary-foreground transition-colors hover:bg-primary-foreground hover:text-primary"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-6 sm:mb-10 text-center"
+                transition={{ delay: 0.9, duration: 0.5 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-                  Browse Memes
-                </h2>
-                <p className="mt-1 sm:mt-2 text-sm sm:text-lg text-muted-foreground">
-                  Tap to preview · Click to experience
-                </p>
-              </motion.div>
+                Enter Site
+              </motion.button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <header className="border-b border-border">
+                <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+                  <h1 className="text-2xl font-extrabold tracking-tighter text-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    404chaos
+                  </h1>
+                  <Link
+                    to="/admin/login"
+                    className="text-muted-foreground/40 hover:text-foreground transition-colors"
+                    title="Admin"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Link>
+                </div>
+              </header>
 
-              {loading ? (
-                <div className="flex justify-center py-20">
-                  <p className="text-muted-foreground">Loading...</p>
-                </div>
-              ) : memes.length === 0 ? (
-                <div className="flex flex-col items-center py-20">
-                  <p className="text-muted-foreground text-lg">No memes published yet</p>
-                </div>
-              ) : (
+              <main className="mx-auto max-w-6xl px-3 sm:px-4 py-6 sm:py-10">
                 <motion.div
-                  className="grid gap-3 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    hidden: {},
-                    visible: { transition: { staggerChildren: 0.08 } },
-                  }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 sm:mb-10 text-center"
                 >
-                  {memes.map(meme => (
-                    <motion.div
-                      key={meme.id}
-                      variants={{
-                        hidden: { opacity: 0, y: 30 },
-                        visible: { opacity: 1, y: 0 },
-                      }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <MemeCard meme={meme} />
-                    </motion.div>
-                  ))}
+                  <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                    Browse Memes
+                  </h2>
+                  <p className="mt-1 sm:mt-2 text-sm sm:text-lg text-muted-foreground">
+                    Tap to preview · Click to experience
+                  </p>
                 </motion.div>
-              )}
-            </main>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+
+                {loading ? (
+                  <div className="flex justify-center py-20">
+                    <p className="text-muted-foreground">Loading...</p>
+                  </div>
+                ) : memes.length === 0 ? (
+                  <div className="flex flex-col items-center py-20">
+                    <p className="text-muted-foreground text-lg">No memes published yet</p>
+                  </div>
+                ) : (
+                  <motion.div
+                    className="grid gap-3 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      hidden: {},
+                      visible: { transition: { staggerChildren: 0.08 } },
+                    }}
+                  >
+                    {memes.map(meme => (
+                      <motion.div
+                        key={meme.id}
+                        variants={{
+                          hidden: { opacity: 0, y: 30 },
+                          visible: { opacity: 1, y: 0 },
+                        }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        <MemeCard meme={meme} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </main>
+
+              {/* Floating pause/play button */}
+              <motion.button
+                onClick={toggleGlobalPause}
+                className="fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background/80 text-foreground shadow-lg backdrop-blur-sm transition-colors hover:bg-accent"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 }}
+                whileTap={{ scale: 0.9 }}
+                title={globalPaused ? 'Resume all' : 'Pause all'}
+              >
+                {globalPaused ? <Play className="h-5 w-5" /> : <Pause className="h-5 w-5" />}
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </PauseContext.Provider>
   );
 };
 
