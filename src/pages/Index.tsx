@@ -44,7 +44,7 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
   return (
     <Link to={`/m/${meme.slug}`}>
       <motion.div
-        className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-border shadow-lg cursor-pointer"
+        className="group relative overflow-hidden rounded-xl sm:rounded-2xl border border-primary-foreground/10 shadow-lg cursor-pointer"
         style={{ backgroundColor: meme.background_color || undefined }}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -139,7 +139,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-primary text-primary-foreground">
       <AnimatePresence mode="wait">
         {!entered ? (
           <motion.div
@@ -194,14 +194,14 @@ const Index = () => {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             {/* Nav */}
-            <header className="border-b border-border">
+            <header className="border-b border-primary-foreground/10">
               <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-                <h1 className="text-2xl font-extrabold tracking-tighter text-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                <h1 className="text-2xl font-extrabold tracking-tighter text-primary-foreground" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                   404chaos
                 </h1>
                 <Link
                   to="/admin/login"
-                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
+                  className="text-primary-foreground/30 hover:text-primary-foreground transition-colors"
                   title="Admin"
                 >
                   <Settings className="h-4 w-4" />
@@ -215,21 +215,21 @@ const Index = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-6 sm:mb-10 text-center"
               >
-                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-primary-foreground">
                   Browse Memes
                 </h2>
-                <p className="mt-1 sm:mt-2 text-sm sm:text-lg text-muted-foreground">
+                <p className="mt-1 sm:mt-2 text-sm sm:text-lg text-primary-foreground/50">
                   Tap to preview · Click to experience
                 </p>
               </motion.div>
 
               {loading ? (
                 <div className="flex justify-center py-20">
-                  <p className="text-muted-foreground">Loading...</p>
+                  <p className="text-primary-foreground/50">Loading...</p>
                 </div>
               ) : memes.length === 0 ? (
                 <div className="flex flex-col items-center py-20">
-                  <p className="text-muted-foreground text-lg">No memes published yet</p>
+                  <p className="text-primary-foreground/50 text-lg">No memes published yet</p>
                 </div>
               ) : (
                 <motion.div
