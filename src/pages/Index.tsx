@@ -103,7 +103,7 @@ const MemeCard = ({ meme }: { meme: MemePage }) => {
 
         <div className="p-3 sm:p-4">
           <h3 className="text-base sm:text-lg font-bold truncate" style={{ color: meme.background_color ? '#fff' : undefined }}>{meme.title}</h3>
-          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm truncate" style={{ color: meme.background_color ? 'rgba(255,255,255,0.7)' : undefined }}>{meme.headline}</p>
+          
         </div>
         {meme.audio_url && (
           <audio ref={audioRef} src={meme.audio_url} preload="metadata" />
